@@ -6,12 +6,12 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
   const router = useRouter();
-  const [directory, setDirectory] = useState('');
+  const [directory, setDirectory] = useState("");
 
   useEffect(() => {
     const dir = localStorage.getItem("directory") || "";
     setDirectory(dir);
-  }, [])
+  }, []);
 
   const handleSubmit = async (formData: FormData) => {
     const directory = formData.get("directory")?.toString().trim() || "";
@@ -37,7 +37,7 @@ export default function Home() {
               className="input-base"
               placeholder="请输入目录"
               value={directory}
-              onChange={e => setDirectory(e.target.value)}
+              onChange={(e) => setDirectory(e.target.value)}
             />
           </div>
 

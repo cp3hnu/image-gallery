@@ -1,5 +1,5 @@
 import fs from "fs";
-//import path from "path";
+
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -17,6 +17,6 @@ export async function GET(req: NextRequest) {
   // 读取文件流并返回
   const fileBuffer = fs.readFileSync(filePath);
   return new NextResponse(fileBuffer, {
-    headers: { "Content-Type": "image/jpeg" }
+    headers: { "Content-Type": "image/jpeg" },
   });
 }

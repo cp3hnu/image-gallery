@@ -11,9 +11,9 @@ export default function Images() {
   useEffect(() => {
     const directory = localStorage.getItem("directory") || "";
     fetch("/api/images?directory=" + directory, {
-      method: "GET"
+      method: "GET",
     })
-      .then(res => {
+      .then((res) => {
         if (!res.ok) {
           const { status } = res;
           if (status === 404) {
@@ -22,13 +22,13 @@ export default function Images() {
             setError("无法读取目录");
           }
           return {
-            images: []
+            images: [],
           };
         }
         return res.json();
       })
-      .then(data => setImages(data.images))
-      .catch(err => console.error("获取图片失败", err));
+      .then((data) => setImages(data.images))
+      .catch((err) => console.error("获取图片失败", err));
   }, []);
 
   const preview = (filename: string) => {
@@ -58,20 +58,13 @@ export default function Images() {
               className="w-full h-auto rounded-lg shadow"
               onClick={() => preview(name)}
             />
-            <div
-              className="mt-4 text-lg cursor-pointer w-fit"
-              onClick={() => watch(name)}
-            >
+            <div className="mt-4 text-lg cursor-pointer w-fit" onClick={() => watch(name)}>
               {name}
             </div>
           </div>
         ))}
       </div>
-      {error && (
-        <div className="w-full h-full flex items-center justify-center text-red-500 text-4xl">
-          {error}
-        </div>
-      )}
+      {error && <div className="w-full h-full flex items-center justify-center text-red-500 text-4xl">{error}</div>}
     </div>
   );
 }
