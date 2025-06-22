@@ -58,13 +58,20 @@ export default function Images() {
               className="w-full h-auto rounded-lg shadow"
               onClick={() => preview(name)}
             />
-            <div className="mt-4 text-lg cursor-pointer w-fit" onClick={() => watch(name)}>
+            <div
+              className="mt-4 text-lg cursor-pointer w-fit"
+              onClick={() => watch(name)}
+            >
               {name}
             </div>
           </div>
         ))}
       </div>
-      {error && <div className="w-full h-full flex items-center justify-center text-red-500 text-4xl">{error}</div>}
+      {error && (
+        <div className="w-full h-full flex items-center justify-center text-red-500 text-4xl">
+          {error}
+        </div>
+      )}
     </div>
   );
 }
