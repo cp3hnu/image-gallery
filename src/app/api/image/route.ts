@@ -16,7 +16,8 @@ export async function GET(req: NextRequest) {
 
   // 读取文件流并返回
   const fileBuffer = fs.readFileSync(filePath);
-  return new NextResponse(fileBuffer, {
+  const uint8 = new Uint8Array(fileBuffer);
+  return new NextResponse(uint8, {
     headers: { "Content-Type": "image/jpeg" },
   });
 }

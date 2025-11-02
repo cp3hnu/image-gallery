@@ -49,10 +49,10 @@ export default function Images() {
     <div className="w-full h-full">
       <div className="grid grid-cols-3 gap-4 p-4">
         {images.map(({ src, name }) => (
-          <div key={name}>
+          <div key={src}>
             <Image
-              width={100}
-              height={100}
+              width={800}
+              height={800}
               src={src}
               alt="图片"
               className="w-full h-auto rounded-lg shadow"
