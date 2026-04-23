@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
   const router = useRouter();
-  const [directory, setDirectory] = useState("");
+  const [directory, setDirectory] = useState("/Users/cp3hnu/Movies/Japan");
 
   useEffect(() => {
     const dir = localStorage.getItem("directory") || "";
@@ -37,7 +37,7 @@ export default function Home() {
               className="input-base"
               placeholder="请输入目录"
               value={directory}
-              onChange={(e) => setDirectory(e.target.value)}
+              onChange={e => setDirectory(e.target.value)}
             />
           </div>
 
