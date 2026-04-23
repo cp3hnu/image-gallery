@@ -3,26 +3,57 @@ import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { ImageInfo } from "@/app/types";
 
-const getImages = async (dir: string): Promise<ImageInfo[]> => {
-  let results: ImageInfo[] = [];
-  const files = await fs.promises.readdir(dir, {
-    withFileTypes: true,
-  });
+const IMAGE_REGEX = /\.(jpg|jpeg|png|gif|webp)$/i;
+const VIDEO_REGEX = /\.(mp4|webm|mov|m4v|mkv|avi|ogv)$/i;
+
+type Entry = {
+  filePath: string;
+  fileName: string;
+};
+
+const collectFiles = async (dir: string, images: Entry[], videos: Map<string, string>): Promise<void> => {
+  const files = await fs.promises.readdir(dir, { withFileTypes: true });
 
   for (const file of files) {
     const filePath = path.join(dir, file.name);
 
     if (file.isDirectory()) {
-      results = results.concat(await getImages(filePath));
-    } else if (/\.(jpg|jpeg|png|gif|webp)$/i.test(file.name)) {
-      results.push({
-        src: `/api/image?filePath=${encodeURIComponent(filePath)}`,
-        name: file.name,
-      });
+      await collectFiles(filePath, images, videos);
+      continue;
+    }
+
+    if (IMAGE_REGEX.test(file.name)) {
+      images.push({ filePath, fileName: file.name });
+    } else if (VIDEO_REGEX.test(file.name)) {
+      const base = path.basename(file.name, path.extname(file.name)).toLowerCase();
+      // 同名视频若有多份，保留第一个遇到的
+      const key = path.join(dir, base);
+      if (!videos.has(key)) {
+        videos.set(key, filePath);
+      }
     }
   }
+};
 
-  return results;
+const getImages = async (dir: string): Promise<ImageInfo[]> => {
+  const images: Entry[] = [];
+  const videos = new Map<string, string>();
+  await collectFiles(dir, images, videos);
+
+  return images.map(({ filePath, fileName }) => {
+    const base = path.basename(fileName, path.extname(fileName)).toLowerCase();
+    const videoKey = path.join(path.dirname(filePath), base);
+    const videoPath = videos.get(videoKey);
+
+    const info: ImageInfo = {
+      src: `/api/image?filePath=${encodeURIComponent(filePath)}`,
+      name: fileName,
+    };
+    if (videoPath) {
+      info.video = `/api/video?filePath=${encodeURIComponent(videoPath)}`;
+    }
+    return info;
+  });
 };
 
 // 处理 GET 请求
