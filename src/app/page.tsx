@@ -4,12 +4,14 @@ import "@/app/globals.css";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+const DEFAULTDIR = "/Users/cp3hnu/Movies/Japan";
+
 export default function Home() {
   const router = useRouter();
-  const [directory, setDirectory] = useState("/Users/cp3hnu/Movies/Japan");
+  const [directory, setDirectory] = useState(DEFAULTDIR);
 
   useEffect(() => {
-    const dir = localStorage.getItem("directory") || "";
+    const dir = localStorage.getItem("directory") || DEFAULTDIR;
     setDirectory(dir);
   }, []);
 
