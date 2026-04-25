@@ -11,14 +11,19 @@ type Entry = {
   fileName: string;
 };
 
-const collectFiles = async (dir: string, images: Entry[], videos: Map<string, string>): Promise<void> => {
+const collectFiles = async (
+  dir: string,
+  images: Entry[],
+  videos: Map<string, string>,
+  subtitles: Map<string, string>,
+): Promise<void> => {
   const files = await fs.promises.readdir(dir, { withFileTypes: true });
 
   for (const file of files) {
     const filePath = path.join(dir, file.name);
 
     if (file.isDirectory()) {
-      await collectFiles(filePath, images, videos);
+      await collectFiles(filePath, images, videos, subtitles);
       continue;
     }
 
@@ -31,6 +36,12 @@ const collectFiles = async (dir: string, images: Entry[], videos: Map<string, st
       if (!videos.has(key)) {
         videos.set(key, filePath);
       }
+    } else if (/\.srt$/i.test(file.name)) {
+      const base = path.basename(file.name, path.extname(file.name)).toLowerCase();
+      const key = path.join(dir, base);
+      if (!subtitles.has(key)) {
+        subtitles.set(key, filePath);
+      }
     }
   }
 };
@@ -38,12 +49,14 @@ const collectFiles = async (dir: string, images: Entry[], videos: Map<string, st
 const getImages = async (dir: string): Promise<ImageInfo[]> => {
   const images: Entry[] = [];
   const videos = new Map<string, string>();
-  await collectFiles(dir, images, videos);
+  const subtitles = new Map<string, string>();
+  await collectFiles(dir, images, videos, subtitles);
 
   return images.map(({ filePath, fileName }) => {
     const base = path.basename(fileName, path.extname(fileName)).toLowerCase();
-    const videoKey = path.join(path.dirname(filePath), base);
-    const videoPath = videos.get(videoKey);
+    const key = path.join(path.dirname(filePath), base);
+    const videoPath = videos.get(key);
+    const subtitlePath = subtitles.get(key);
 
     const info: ImageInfo = {
       src: `/api/image?filePath=${encodeURIComponent(filePath)}`,
@@ -51,6 +64,10 @@ const getImages = async (dir: string): Promise<ImageInfo[]> => {
     };
     if (videoPath) {
       info.video = `/api/video?filePath=${encodeURIComponent(videoPath)}`;
+      // 仅当存在视频时才把字幕暴露出去
+      if (subtitlePath) {
+        info.subtitle = `/api/subtitle?filePath=${encodeURIComponent(subtitlePath)}`;
+      }
     }
     return info;
   });

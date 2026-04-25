@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack -p 28256",
+    "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start -p 28257",
+    "start": "next start -p",
     "lint": "next lint",
     "lint-fix": "next lint --fix",
     "prettier-check": "prettier --check .",

@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 export default function Images() {
   const [images, setImages] = useState<ImageInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [playingVideo, setPlayingVideo] = useState<string | null>(null);
+  const [playingImage, setPlayingImage] = useState<ImageInfo | null>(null);
 
   useEffect(() => {
     const directory = localStorage.getItem("directory") || "";
@@ -33,13 +33,13 @@ export default function Images() {
   }, []);
 
   useEffect(() => {
-    if (!playingVideo) return;
+    if (!playingImage) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setPlayingVideo(null);
+      if (e.key === "Escape") setPlayingImage(null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [playingVideo]);
+  }, [playingImage]);
 
   const preview = (filename: string) => {
     const name = filename.replace(/\.[^/.]+$/, ""); // 去掉扩展名
@@ -50,7 +50,7 @@ export default function Images() {
 
   const watch = (image: ImageInfo) => {
     if (image.video) {
-      setPlayingVideo(image.video);
+      setPlayingImage(image);
       return;
     }
     const name = image.name.replace(/\.[^/.]+$/, ""); // 去掉扩展名
@@ -89,24 +89,29 @@ export default function Images() {
         })}
       </div>
       {error && <div className="w-full h-full flex items-center justify-center text-red-500 text-4xl">{error}</div>}
-      {playingVideo && (
+      {playingImage && (
         <div
           className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
-          onClick={() => setPlayingVideo(null)}>
+          onClick={() => setPlayingImage(null)}>
           <div className="relative max-w-[90vw] max-h-[90vh]" onClick={e => e.stopPropagation()}>
             <button
               type="button"
               aria-label="关闭"
               className="absolute -top-10 right-0 text-white text-4xl leading-none px-3 py-1 hover:opacity-80"
-              onClick={() => setPlayingVideo(null)}>
+              onClick={() => setPlayingImage(null)}>
               ×
             </button>
             <video
-              src={playingVideo}
+              key={playingImage.video}
+              src={playingImage.video}
               controls
               autoPlay
-              className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-lg bg-black"
-            />
+              crossOrigin="anonymous"
+              className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-lg bg-black">
+              {playingImage.subtitle && (
+                <track kind="subtitles" src={playingImage.subtitle} srcLang="zh" label="中文" default />
+              )}
+            </video>
           </div>
         </div>
       )}
