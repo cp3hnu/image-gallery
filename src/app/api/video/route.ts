@@ -1,6 +1,5 @@
 import fs from "fs";
 import path from "path";
-import { Readable } from "stream";
 import { NextRequest, NextResponse } from "next/server";
 
 const MIME_TYPES: Record<string, string> = {
@@ -11,6 +10,52 @@ const MIME_TYPES: Record<string, string> = {
   ".mov": "video/quicktime",
   ".mkv": "video/x-matroska",
   ".avi": "video/x-msvideo",
+};
+
+// 把 Node 文件流包装成 Web ReadableStream，并妥善处理客户端中途断开的情况，
+// 避免出现 "Invalid state: Controller is already closed" 噪音报错。
+const toSafeWebStream = (nodeStream: fs.ReadStream, signal: AbortSignal): ReadableStream<Uint8Array> => {
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      const cleanup = () => {
+        if (!nodeStream.destroyed) nodeStream.destroy();
+      };
+
+      if (signal.aborted) {
+        cleanup();
+        return;
+      }
+      signal.addEventListener("abort", cleanup, { once: true });
+
+      nodeStream.on("data", (chunk: string | Buffer) => {
+        try {
+          const buf = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
+          controller.enqueue(new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength));
+        } catch {
+          // controller 已经关闭（客户端取消请求），停止读取即可
+          cleanup();
+        }
+      });
+      nodeStream.on("end", () => {
+        try {
+          controller.close();
+        } catch {
+          // 已关闭则忽略
+        }
+      });
+      nodeStream.on("error", err => {
+        try {
+          controller.error(err);
+        } catch {
+          // 已关闭则忽略
+        }
+        cleanup();
+      });
+    },
+    cancel() {
+      if (!nodeStream.destroyed) nodeStream.destroy();
+    },
+  });
 };
 
 export async function GET(req: NextRequest) {
@@ -45,7 +90,7 @@ export async function GET(req: NextRequest) {
 
     const chunkSize = end - start + 1;
     const nodeStream = fs.createReadStream(filePath, { start, end });
-    const webStream = Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>;
+    const webStream = toSafeWebStream(nodeStream, req.signal);
 
     return new NextResponse(webStream, {
       status: 206,
@@ -59,7 +104,7 @@ export async function GET(req: NextRequest) {
   }
 
   const nodeStream = fs.createReadStream(filePath);
-  const webStream = Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>;
+  const webStream = toSafeWebStream(nodeStream, req.signal);
 
   return new NextResponse(webStream, {
     status: 200,
